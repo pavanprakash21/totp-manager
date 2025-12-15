@@ -309,6 +309,104 @@ func TestStore_MultipleServices(t *testing.T) {
 	}
 }
 
+// TestGetDefaultStoragePath tests default storage path generation
+func TestGetDefaultStoragePath(t *testing.T) {
+	path, err := GetDefaultStoragePath()
+	if err != nil {
+		t.Fatalf("GetDefaultStoragePath() error = %v", err)
+	}
+
+	if path == "" {
+		t.Error("GetDefaultStoragePath() returned empty path")
+	}
+
+	// Should contain .config/totp-manager
+	if !contains(path, ".config") || !contains(path, "totp-manager") {
+		t.Errorf("Path %q doesn't contain expected structure", path)
+	}
+
+	// Should end with secrets.enc
+	if !contains(path, "secrets.enc") {
+		t.Errorf("Path %q doesn't end with secrets.enc", path)
+	}
+}
+
+// TestStore_SaveEmptyStorage tests saving empty storage
+func TestStore_SaveEmptyStorage(t *testing.T) {
+	tmpDir := t.TempDir()
+	storePath := filepath.Join(tmpDir, "empty.enc")
+	passphrase := "test-pass"
+
+	store, err := Create(storePath, passphrase)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	// Save without adding services
+	err = store.Save()
+	if err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Load and verify
+	loaded, err := Load(storePath, passphrase)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if len(loaded.Services) != 0 {
+		t.Errorf("Expected 0 services, got %d", len(loaded.Services))
+	}
+}
+
+// TestStore_LoadNonexistent tests loading nonexistent file
+func TestStore_LoadNonexistent(t *testing.T) {
+	_, err := Load("/nonexistent/path/file.enc", "password")
+	if err == nil {
+		t.Error("Expected error loading nonexistent file")
+	}
+}
+
+// TestStore_CreateDirectoryCreation tests that Create creates parent directories
+func TestStore_CreateDirectoryCreation(t *testing.T) {
+	tmpDir := t.TempDir()
+	storePath := filepath.Join(tmpDir, "subdir", "nested", "secrets.enc")
+	passphrase := "test-pass"
+
+	store, err := Create(storePath, passphrase)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	err = store.Save()
+	if err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Verify file and directories were created
+	if _, err := os.Stat(storePath); os.IsNotExist(err) {
+		t.Error("Storage file was not created in nested directory")
+	}
+}
+
+// TestStore_UpdateLastUsedNonexistent tests updating nonexistent service
+func TestStore_UpdateLastUsedNonexistent(t *testing.T) {
+	tmpDir := t.TempDir()
+	storePath := filepath.Join(tmpDir, "test.enc")
+	passphrase := "test-pass"
+
+	store, err := Create(storePath, passphrase)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	// Try to update nonexistent service - should not panic
+	err = store.UpdateLastUsed("NonexistentService")
+	if err == nil {
+		t.Error("Expected error updating nonexistent service")
+	}
+}
+
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && findIndex(s, substr) >= 0

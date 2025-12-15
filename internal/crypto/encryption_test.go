@@ -219,6 +219,69 @@ func TestEncryptDecrypt_LargeData(t *testing.T) {
 	}
 }
 
+// TestEncrypt_InvalidKeySize tests error handling for invalid key size
+func TestEncrypt_InvalidKeySize(t *testing.T) {
+	invalidKey := make([]byte, 16) // Wrong size (should be 32)
+	plaintext := []byte("test")
+
+	_, _, err := Encrypt(plaintext, invalidKey)
+	if err == nil {
+		t.Error("Encrypt() should fail with invalid key size")
+	}
+}
+
+// TestDecrypt_InvalidKeySize tests error handling for invalid key size in decryption
+func TestDecrypt_InvalidKeySize(t *testing.T) {
+	invalidKey := make([]byte, 16) // Wrong size
+	ciphertext := []byte("dummy")
+	nonce := make([]byte, 12)
+
+	_, err := Decrypt(ciphertext, invalidKey, nonce)
+	if err == nil {
+		t.Error("Decrypt() should fail with invalid key size")
+	}
+}
+
+// TestDecrypt_TamperedNonce tests decryption with tampered nonce
+func TestDecrypt_TamperedNonce(t *testing.T) {
+	key := make([]byte, 32)
+	plaintext := []byte("secret message")
+
+	ciphertext, nonce, err := Encrypt(plaintext, key)
+	if err != nil {
+		t.Fatalf("Encrypt() error = %v", err)
+	}
+
+	// Tamper with nonce
+	nonce[0] ^= 0xFF
+
+	// Try to decrypt
+	_, err = Decrypt(ciphertext, key, nonce)
+	if err == nil {
+		t.Error("Decrypt() should fail with tampered nonce")
+	}
+}
+
+// TestEncrypt_EmptyPlaintext tests encrypting empty data
+func TestEncrypt_EmptyPlaintext(t *testing.T) {
+	key := make([]byte, 32)
+	plaintext := []byte{}
+
+	ciphertext, nonce, err := Encrypt(plaintext, key)
+	if err != nil {
+		t.Fatalf("Encrypt() error = %v", err)
+	}
+
+	decrypted, err := Decrypt(ciphertext, key, nonce)
+	if err != nil {
+		t.Fatalf("Decrypt() error = %v", err)
+	}
+
+	if !bytes.Equal(decrypted, plaintext) {
+		t.Error("Decrypted empty plaintext doesn't match")
+	}
+}
+
 // BenchmarkEncrypt benchmarks encryption performance
 func BenchmarkEncrypt(b *testing.B) {
 	key := make([]byte, 32)

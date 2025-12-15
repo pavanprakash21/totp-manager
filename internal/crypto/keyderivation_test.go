@@ -137,6 +137,74 @@ func TestGenerateSalt_Uniqueness(t *testing.T) {
 	}
 }
 
+// TestDeriveKey_EmptyPassphrase tests key derivation with empty passphrase
+func TestDeriveKey_EmptyPassphrase(t *testing.T) {
+	salt := []byte("1234567890123456")
+
+	key, err := DeriveKey("", salt)
+	if err != nil {
+		t.Fatalf("DeriveKey() error = %v", err)
+	}
+
+	if len(key) != 32 {
+		t.Errorf("Expected 32-byte key even for empty passphrase, got %d", len(key))
+	}
+}
+
+// TestDeriveKey_LongPassphrase tests key derivation with very long passphrase
+func TestDeriveKey_LongPassphrase(t *testing.T) {
+	salt := []byte("1234567890123456")
+	longPassphrase := ""
+	for i := 0; i < 1000; i++ {
+		longPassphrase += "a"
+	}
+
+	key, err := DeriveKey(longPassphrase, salt)
+	if err != nil {
+		t.Fatalf("DeriveKey() error = %v", err)
+	}
+
+	if len(key) != 32 {
+		t.Errorf("Expected 32-byte key for long passphrase, got %d", len(key))
+	}
+}
+
+// TestDeriveKey_UnicodePassphrase tests key derivation with unicode characters
+func TestDeriveKey_UnicodePassphrase(t *testing.T) {
+	salt := []byte("1234567890123456")
+	unicodePassphrase := "パスワード🔐"
+
+	key, err := DeriveKey(unicodePassphrase, salt)
+	if err != nil {
+		t.Fatalf("DeriveKey() error = %v", err)
+	}
+
+	if len(key) != 32 {
+		t.Errorf("Expected 32-byte key for unicode passphrase, got %d", len(key))
+	}
+}
+
+// TestGenerateSalt_Multiple tests generating multiple salts
+func TestGenerateSalt_Multiple(t *testing.T) {
+	salts := make([][]byte, 10)
+	for i := 0; i < 10; i++ {
+		salt, err := GenerateSalt()
+		if err != nil {
+			t.Fatalf("GenerateSalt() error = %v", err)
+		}
+		salts[i] = salt
+	}
+
+	// Check all salts are unique
+	for i := 0; i < len(salts); i++ {
+		for j := i + 1; j < len(salts); j++ {
+			if bytes.Equal(salts[i], salts[j]) {
+				t.Errorf("Salts %d and %d are identical", i, j)
+			}
+		}
+	}
+}
+
 // BenchmarkDeriveKey benchmarks key derivation performance
 func BenchmarkDeriveKey(b *testing.B) {
 	passphrase := "test-passphrase"
@@ -145,5 +213,13 @@ func BenchmarkDeriveKey(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = DeriveKey(passphrase, salt)
+	}
+}
+
+// BenchmarkGenerateSalt benchmarks salt generation performance
+func BenchmarkGenerateSalt(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = GenerateSalt()
 	}
 }
