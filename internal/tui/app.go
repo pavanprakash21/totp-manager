@@ -16,6 +16,7 @@ type Model struct {
 	services        []storage.Service
 	filteredIndices []int // indices of filtered services
 	cursor          int
+	viewportOffset  int               // first visible item index for scrolling
 	totpCodes       map[string]string // service name -> current TOTP code
 	remainingTime   int               // seconds remaining until refresh
 	lastUpdate      time.Time
@@ -115,6 +116,8 @@ func (m *Model) filterServices() {
 	if m.cursor >= len(m.filteredIndices) {
 		m.cursor = 0
 	}
+	// Reset viewport offset when filter changes
+	m.viewportOffset = 0
 }
 
 // fuzzyMatch checks if all characters in query appear in text in order

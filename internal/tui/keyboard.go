@@ -84,11 +84,23 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "up", "k": // T045: Vim key 'k' for up
 		if m.cursor > 0 {
 			m.cursor--
+			// Scroll viewport up if cursor goes above visible area
+			if m.cursor < m.viewportOffset {
+				m.viewportOffset = m.cursor
+			}
 		}
 
 	case "down", "j": // T045: Vim key 'j' for down
 		if m.cursor < len(m.filteredIndices)-1 {
 			m.cursor++
+			// Scroll viewport down if cursor goes below visible area
+			maxVisibleItems := (m.height - 9) / 3
+			if maxVisibleItems < 1 {
+				maxVisibleItems = 1
+			}
+			if m.cursor >= m.viewportOffset+maxVisibleItems {
+				m.viewportOffset = m.cursor - maxVisibleItems + 1
+			}
 		}
 
 	// T046: Spacebar to copy code to clipboard
@@ -117,10 +129,19 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Home/End keys for quick navigation
 	case "home", "g":
 		m.cursor = 0
+		m.viewportOffset = 0
 
 	case "end", "G":
 		if len(m.filteredIndices) > 0 {
 			m.cursor = len(m.filteredIndices) - 1
+			// Scroll to show last item
+			maxVisibleItems := (m.height - 9) / 3
+			if maxVisibleItems < 1 {
+				maxVisibleItems = 1
+			}
+			if m.cursor >= maxVisibleItems {
+				m.viewportOffset = m.cursor - maxVisibleItems + 1
+			}
 		}
 	}
 

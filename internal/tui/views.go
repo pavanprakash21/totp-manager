@@ -56,7 +56,30 @@ func (m Model) View() string {
 		b.WriteString(noResultsMsg)
 		b.WriteString("\n")
 	} else {
-		for i, serviceIdx := range m.filteredIndices {
+		// Calculate how many items can fit on screen
+		// Each item takes 3 lines (top border, content, bottom border)
+		// Reserve space for header (4 lines), timer (2 lines), help (3 lines) = 9 lines
+		maxVisibleItems := (m.height - 9) / 3
+		if maxVisibleItems < 1 {
+			maxVisibleItems = 1
+		}
+
+		// Calculate viewport bounds
+		start := m.viewportOffset
+		end := start + maxVisibleItems
+		if end > len(m.filteredIndices) {
+			end = len(m.filteredIndices)
+		}
+
+		// Show scroll indicators
+		if start > 0 {
+			b.WriteString(helpStyle.Render("  ▲ More items above (scroll up)"))
+			b.WriteString("\n")
+		}
+
+		// Render visible items only
+		for i := start; i < end; i++ {
+			serviceIdx := m.filteredIndices[i]
 			service := m.services[serviceIdx]
 			isSelected := i == m.cursor
 			code := m.totpCodes[service.Name]
@@ -66,6 +89,12 @@ func (m Model) View() string {
 
 			line := m.renderServiceLine(service.Name, service.Identifier, code, isSelected)
 			b.WriteString(line)
+			b.WriteString("\n")
+		}
+
+		// Show scroll indicator at bottom
+		if end < len(m.filteredIndices) {
+			b.WriteString(helpStyle.Render("  ▼ More items below (scroll down)"))
 			b.WriteString("\n")
 		}
 	}

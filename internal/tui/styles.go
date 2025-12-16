@@ -32,7 +32,6 @@ var (
 			BorderForeground(colorBorder).
 			PaddingLeft(2).
 			PaddingRight(2).
-			MarginBottom(1).
 			Width(80)
 
 	selectedItemStyle = lipgloss.NewStyle().
@@ -43,7 +42,6 @@ var (
 				Bold(true).
 				PaddingLeft(2).
 				PaddingRight(2).
-				MarginBottom(1).
 				Width(80)
 
 	// Service name style
