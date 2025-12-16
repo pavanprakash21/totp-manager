@@ -114,10 +114,10 @@ func (m Model) View() string {
 	b.WriteString("\n")
 	var helpText string
 	if m.searchMode {
-		helpText = helpStyle.Render("space/enter: copy • ↑/↓: navigate • backspace: delete • ctrl+u: clear • esc: done")
+		helpText = helpStyle.Render("j/k/↑/↓: navigate • space/enter: copy • backspace: delete • ctrl+u: clear • esc: done")
 	} else if m.searchQuery != "" {
 		// Filtered view (search done but not in search mode)
-		helpText = helpStyle.Render("/: search • ctrl+u: clear filter • space/enter: copy • q: quit")
+		helpText = helpStyle.Render("/: search • ctrl+u: clear filter • j/k/↑/↓: navigate • space/enter: copy • q: quit")
 	} else {
 		helpText = helpStyle.Render("/: search • ↑/k: up • ↓/j: down • space/enter: copy • q: quit")
 	}

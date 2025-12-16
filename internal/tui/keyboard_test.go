@@ -159,26 +159,26 @@ func TestHandleKeyPress_SearchTyping(t *testing.T) {
 	model := NewModel(store)
 	model.searchMode = true
 
-	// Type "git"
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}}
+	// Type "oog" (avoiding g/k which are now navigation keys)
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}}
 	newModel, _ := model.handleKeyPress(msg)
 	m := newModel.(Model)
 
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}}
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}}
 	newModel, _ = m.handleKeyPress(msg)
 	m = newModel.(Model)
 
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}}
 	newModel, _ = m.handleKeyPress(msg)
 	m = newModel.(Model)
 
-	if m.searchQuery != "git" {
-		t.Errorf("Expected search query 'git', got %q", m.searchQuery)
+	if m.searchQuery != "oog" {
+		t.Errorf("Expected search query 'oog', got %q", m.searchQuery)
 	}
 
-	// Should filter to GitHub and GitLab
-	if len(m.filteredIndices) != 2 {
-		t.Errorf("Expected 2 filtered services, got %d", len(m.filteredIndices))
+	// Should filter to Google (oog matches Google)
+	if len(m.filteredIndices) != 1 {
+		t.Errorf("Expected 1 filtered service, got %d", len(m.filteredIndices))
 	}
 }
 
@@ -265,7 +265,7 @@ func TestHandleKeyPress_CopyInSearchMode(t *testing.T) {
 	}
 }
 
-// TestHandleKeyPress_NavigationInSearchMode tests that j/k don't type in search
+// TestHandleKeyPress_NavigationInSearchMode tests arrow key navigation in search mode
 func TestHandleKeyPress_NavigationInSearchMode(t *testing.T) {
 	store := &storage.Store{
 		Storage: &storage.Storage{
@@ -280,14 +280,49 @@ func TestHandleKeyPress_NavigationInSearchMode(t *testing.T) {
 	model := NewModel(store)
 	model.searchMode = true
 	model.searchQuery = ""
+	model.cursor = 0
 
-	// Type 'j' in search mode - should add to query
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	// Arrow down in search mode - should navigate
+	msg := tea.KeyMsg{Type: tea.KeyDown}
 	newModel, _ := model.handleKeyPress(msg)
 	m := newModel.(Model)
 
-	if m.searchQuery != "j" {
-		t.Errorf("Expected search query 'j', got %q", m.searchQuery)
+	if m.cursor != 1 {
+		t.Errorf("Expected cursor at 1 after down arrow, got %d", m.cursor)
+	}
+
+	// Arrow up - should navigate
+	msg = tea.KeyMsg{Type: tea.KeyUp}
+	newModel, _ = m.handleKeyPress(msg)
+	m = newModel.(Model)
+
+	if m.cursor != 0 {
+		t.Errorf("Expected cursor at 0 after up arrow, got %d", m.cursor)
+	}
+}
+
+// TestHandleKeyPress_SearchTypingJK tests that j/k/g/G are added to search query
+func TestHandleKeyPress_SearchTypingJK(t *testing.T) {
+	store := &storage.Store{
+		Storage: &storage.Storage{
+			Version: 1,
+			Services: []storage.Service{
+				{Name: "Slack", Secret: "JBSWY3DPEHPK3PXP", CreatedAt: time.Now()},
+			},
+		},
+	}
+
+	model := NewModel(store)
+	model.searchMode = true
+	model.searchQuery = "slac"
+
+	// Type 'k' in search mode - should add to query
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	newModel, _ := model.handleKeyPress(msg)
+	m := newModel.(Model)
+
+	if m.searchQuery != "slack" {
+		t.Errorf("Expected search query 'slack', got %q", m.searchQuery)
 	}
 }
 

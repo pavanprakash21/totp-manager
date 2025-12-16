@@ -34,6 +34,30 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.filterServices()
 			return m, nil
 
+		case tea.KeyUp:
+			// Allow navigation in search mode
+			if m.cursor > 0 {
+				m.cursor--
+				if m.cursor < m.viewportOffset {
+					m.viewportOffset = m.cursor
+				}
+			}
+			return m, nil
+
+		case tea.KeyDown:
+			// Allow navigation in search mode
+			if m.cursor < len(m.filteredIndices)-1 {
+				m.cursor++
+				maxVisibleItems := (m.height - 9) / 3
+				if maxVisibleItems < 1 {
+					maxVisibleItems = 1
+				}
+				if m.cursor >= m.viewportOffset+maxVisibleItems {
+					m.viewportOffset = m.cursor - maxVisibleItems + 1
+				}
+			}
+			return m, nil
+
 		case tea.KeySpace, tea.KeyEnter:
 			// Allow copying in search mode
 			if len(m.filteredIndices) > 0 && m.cursor < len(m.filteredIndices) {
@@ -54,7 +78,8 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case tea.KeyRunes:
-			// Add typed character to search query
+			// All typed characters are search input in search mode
+			// This includes j, k, g, G - only arrow keys navigate
 			m.searchQuery += string(msg.Runes)
 			m.filterServices()
 			return m, nil
