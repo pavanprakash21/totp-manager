@@ -13,8 +13,8 @@ var (
 	colorSecondary = lipgloss.Color("#7D56F4")
 	colorSuccess   = lipgloss.Color("#04B575")
 	colorWarning   = lipgloss.Color("#FFB86C")
-	colorMuted     = lipgloss.Color("#626262")
-	colorBorder    = lipgloss.Color("#383838")
+	colorMuted     = lipgloss.Color("#BBBBBB")
+	colorBorder    = lipgloss.Color("#BBBBBB")
 
 	// Header style
 	headerStyle = lipgloss.NewStyle().
@@ -37,7 +37,7 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(colorSecondary).
-				Background(colorSecondary).
+				// Background(colorSecondary).
 				Foreground(lipgloss.Color("#FFFFFF")).
 				Bold(true).
 				PaddingLeft(2).

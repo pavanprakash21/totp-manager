@@ -128,29 +128,39 @@ func (m Model) View() string {
 
 // renderServiceLine renders a single service line with proper alignment
 func (m Model) renderServiceLine(name, identifier, code string, selected bool) string {
-	// Build full service name with identifier
-	fullName := name
-	if identifier != "" {
-		fullName = fmt.Sprintf("%s (%s)", name, identifier)
+	// Column widths
+	nameWidth := 25
+	identifierWidth := 35
+
+	// Truncate name if too long
+	if len(name) > nameWidth {
+		name = name[:nameWidth-3] + "..."
 	}
 
-	// Truncate name if too long (leave room for code)
-	maxNameLen := 50
-	if len(fullName) > maxNameLen {
-		fullName = fullName[:maxNameLen-3] + "..."
+	// Truncate identifier if too long
+	if len(identifier) > identifierWidth {
+		identifier = identifier[:identifierWidth-3] + "..."
+	}
+
+	// Format identifier (empty if not set)
+	identifierDisplay := identifier
+	if identifierDisplay == "" {
+		identifierDisplay = "-"
 	}
 
 	if selected {
 		// Selected row: full-width highlight
-		nameStr := selectedServiceNameStyle.Render(fullName)
+		nameStr := selectedServiceNameStyle.Width(nameWidth).Render(name)
+		identifierStr := selectedServiceNameStyle.Width(identifierWidth).Render(identifierDisplay)
 		codeStr := selectedCodeStyle.Render(code)
-		line := lipgloss.JoinHorizontal(lipgloss.Top, nameStr, "  ", codeStr)
+		line := lipgloss.JoinHorizontal(lipgloss.Top, nameStr, "  ", identifierStr, "  ", codeStr)
 		return selectedItemStyle.Render(line)
 	}
 
 	// Normal row: colored text in box
-	nameStr := serviceNameStyle.Render(fullName)
+	nameStr := serviceNameStyle.Width(nameWidth).Render(name)
+	identifierStr := lipgloss.NewStyle().Width(identifierWidth).Foreground(colorMuted).Render(identifierDisplay)
 	codeStr := codeStyle.Render(code)
-	line := lipgloss.JoinHorizontal(lipgloss.Top, nameStr, "  ", codeStr)
+	line := lipgloss.JoinHorizontal(lipgloss.Top, nameStr, "  ", identifierStr, "  ", codeStr)
 	return itemStyle.Render(line)
 }
